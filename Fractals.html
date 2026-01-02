@@ -11,17 +11,18 @@
             box-sizing: border-box;
         }
         body{
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;    
-            min-height: 100vh;
+            overflow: hidden;
             background: linear-gradient(to bottom, #000000,#0a0a1a);
         }
         #canvas1{
           border: 0px solid white;
         }
+        
         #mutateBtn{
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
             margin-top: 20px;
             padding: 12px 24px;
             background: rgba(255, 255, 255, 0.1);
@@ -45,16 +46,11 @@
     const mutateBtn = document.getElementById('mutateBtn');
 
     const SIZE = 700;
-    canvas.width = SIZE;
-    canvas.height = SIZE;
-    ctx.lineCap = 'round';
-    ctx.shawdowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 3;
-    ctx.shadowOffsetY = 3;
+
+
 
 class Fratal{
-    constructor(){
+    constructor(drawMode){
             //properties
 this.lineWidth = Math.floor(Math.random() *11) +  4 ;
 this.hue = Math.random() * 360;
@@ -63,17 +59,18 @@ this.maxLevel = 5;
 this.spread = Math.random() * 0.5 + 0.4; 
 this.scale = Math.random() * 0.1 + 0.7; 
 this.branches = 4 ;
-this.branchSize = 110;
+this.branchSize = 150;
+this.drawMode = drawMode;
     }
     draw(ctx){
         
 
 
-ctx.clearRect(0,0,SIZE,SIZE);
+
     ctx.lineWidth = this.lineWidth;
 
 ctx.save();
-ctx.translate(SIZE/2,SIZE/2);
+ctx.translate(canvas.width/2,canvas.height/2);
 for(let i=0; i < this.sides ;i++){
 
     this.drawBranch(ctx,0);
@@ -87,11 +84,38 @@ ctx.restore();
     
    
     const lightness = 10 + level *6;
-        ctx.strokeStyle = `hsl(${this.hue},100%,${lightness}%)`;
+    if(this.drawMode === "branches"){
+             ctx.strokeStyle = `hsl(${this.hue},100%,${lightness}%)`;
         ctx.beginPath();
-    ctx.moveTo(0,0);//first point 
-    ctx.lineTo(this.branchSize,0);//second point
-    ctx.stroke();//render the line
+    ctx.moveTo(0,0);
+    ctx.lineTo(this.branchSize,0);
+    ctx.stroke();
+    }else if (this.drawMode === "circles"){
+         ctx.fillStyle = `hsl(${this.hue + 10},100%,${lightness + 5}%)`;
+    ctx.beginPath();
+    ctx.arc(this.branchSize * 2,0,this.lineWidth*1.5,0,Math.PI *2);
+    ctx.fill();
+    }
+    else if (this.drawMode === "sparks"){
+        if(level === this.maxLevel - 4 && Math.random() < 0.05){
+             ctx.fillStyle = `hsl(${this.hue + 10},100%,${lightness + 20}%)`;
+        ctx.fillStyle = `hsl(${this.hue + 10},100%,${lightness + 20}%)`;
+        ctx.globalAlpha = 0.6;
+        for(let i=0; i<5; i++){
+            ctx.save();
+            ctx.translate(50,150);
+            ctx.rotate((Math.PI *2 /5 )* i);
+              ctx.beginPath();
+        ctx.ellipse(0,8,4,50,0,0,Math.PI *2);
+        ctx.fill();
+        ctx.restore();
+
+        }
+         
+      
+        ctx.globalAlpha = 1;
+        }
+    }
 
     for(let i=0; i<this.branches; i++){
         
@@ -109,15 +133,30 @@ ctx.restore();
 }
 
 function drawFractal(){
-    const fractal = new Fratal();
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const fractal = new Fratal("branches");
+    fractal.draw(ctx);
+    fractal.drawMode = "circles";
+    fractal.draw(ctx);
+    fractal.drawMode = "sparks";
     fractal.draw(ctx);
 }
 
 
-drawFractal();
+
 mutateBtn.addEventListener('click',drawFractal);
   
-
-
+function resizeCanvas(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+        ctx.lineCap = 'round';
+    ctx.shawdowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 3;
+    ctx.shadowOffsetY = 3;
+    drawFractal();
+}
+window.addEventListener('resize',resizeCanvas);
+resizeCanvas();
 
 </script>
